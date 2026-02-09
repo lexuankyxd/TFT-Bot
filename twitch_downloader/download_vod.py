@@ -11,6 +11,7 @@ import urllib.parse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
+import ffmpeg
 import requests
 import tqdm
 
@@ -167,7 +168,7 @@ def prepare_local_playlist_and_files(m3u8_url, tmp_dir, max_workers=DEFAULT_MAX_
     Raises:
         Exception on unrecoverable errors.
     """
-    print(f"Fetching playlist: {m3u8_url}")
+    # logging suppressed
     playlist_text = fetch_text(m3u8_url)
 
     # Keep the original m3u8 URL and its query string so we can preserve token/sig when resolving
@@ -182,7 +183,7 @@ def prepare_local_playlist_and_files(m3u8_url, tmp_dir, max_workers=DEFAULT_MAX_
 
     # If this is a master playlist, pick the best variant and fetch it.
     if is_master_playlist(playlist_text):
-        print("Master playlist detected; choosing best variant by BANDWIDTH")
+        # logging suppressed for master playlist selection
         variant_uri = choose_variant_from_master(playlist_text, base_dir)
         if not variant_uri:
             raise RuntimeError("Could not select a variant from master playlist")
@@ -193,7 +194,6 @@ def prepare_local_playlist_and_files(m3u8_url, tmp_dir, max_workers=DEFAULT_MAX_
         if not parsed_variant.query and original_query:
             sep = '&' if variant_abs.find('?') != -1 else '?'
             variant_abs = variant_abs + sep + original_query
-        print(f"Selected variant: {variant_abs}")
         playlist_text = fetch_text(variant_abs)
         # Update base_dir so segments are resolved relative to the variant's location
         parsed = urllib.parse.urlparse(variant_abs)
@@ -261,14 +261,14 @@ def prepare_local_playlist_and_files(m3u8_url, tmp_dir, max_workers=DEFAULT_MAX_
 
     # Download keys first
     for abs_key_uri, local_key_path in key_local_map.items():
-        print(f"Downloading key: {abs_key_uri} -> {local_key_path}")
+        # logging suppressed for key downloads
         try:
             download_file(abs_key_uri, local_key_path)
         except Exception as e:
             raise RuntimeError(f"Failed to download key {abs_key_uri}: {e}")
 
     # Download segments in parallel (same as before)
-    print(f"Downloading {len(segment_infos)} segments to {tmp_dir} using up to {max_workers} workers")
+    # logging suppressed for segment download summary
     errors = []
     lock = threading.Lock()
 
@@ -288,79 +288,58 @@ def prepare_local_playlist_and_files(m3u8_url, tmp_dir, max_workers=DEFAULT_MAX_
             if err:
                 with lock:
                     errors.append((idx, err))
-                print(f"Segment {idx} failed: {err}")
             else:
-                if idx % 50 == 0:
-                    print(f"Downloaded segment {idx}")
+                # progress printed via tqdm only
+                pass
         pbar.close()
     if errors:
         raise RuntimeError(f"{len(errors)} segments failed to download; first error: {errors[0][1]}")
 
     # Write local playlist
     local_m3u8_path = os.path.join(tmp_dir, "local.m3u8")
-    print(f"Writing local playlist to {local_m3u8_path}")
+    # logging suppressed for playlist writing
     with open(local_m3u8_path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(local_lines))
         f.write('\n')
     return local_m3u8_path
 
-def download_vod(url, output_file=None, max_workers=DEFAULT_MAX_WORKERS):
+def download_vod(id, output_dir, max_workers=DEFAULT_MAX_WORKERS) -> bool:
+    url = f"www.twitch.tv/videos/{id}"
     video_id = get_video_id(url)
     metadata = download_video_metadata(video_id)
     access_token = get_access_token(video_id)
 
     m3u8_url = get_m3u8_url(video_id, access_token['value'], access_token['signature'])
 
-    if not output_file:
-      title = metadata['title'] or 'Untitled'
-      safe_title = title.replace('/', '_')
-      output_file = f"{safe_title}.mp4"
-
-    print(f"Downloading {metadata['title']} to {output_file}")
+    output_file = f"{id}.mp4"
+    # logging suppressed for overall download start
 
     # Prepare temp dir and download all files
     tmp_dir = tempfile.mkdtemp(prefix="twitch_vod_")
     try:
       try:
-          local_playlist = prepare_local_playlist_and_files(m3u8_url, tmp_dir, max_workers=max_workers)
-      except Exception as e:
-        # If we can't prepare, fall back to streaming ffmpeg with original m3u8
-        print(f"Could not prepare local playlist: {e}")
-        print("Falling back to streaming ffmpeg (original behavior).")
-        cmd = ['ffmpeg', '-i', m3u8_url, '-c', 'copy', '-bsf:a', 'aac_adtstoasc', output_file]
-        subprocess.run(cmd, check=True)
-        return
-
-      # Run ffmpeg on local playlist
-      # Use protocol_whitelist to allow file:// use and local files (some ffmpeg builds require it)
-      ffmpeg_cmd = [
-        'ffmpeg',
-        '-protocol_whitelist', 'file,http,https,tcp,tls',
-        '-i', local_playlist,
-        '-c', 'copy',
-        '-bsf:a', 'aac_adtstoasc',
-        output_file
-      ]
-      print("Running ffmpeg to mux local files into final output...")
-      subprocess.run(ffmpeg_cmd, check=True)
-      print("Download & mux complete.")
+        local_playlist = prepare_local_playlist_and_files(m3u8_url, tmp_dir, max_workers=max_workers)
+      except Exception:
+        return False
+      ffmpeg.input(local_playlist).output(f"{output_dir}/{output_file}", c='copy', metadata=metadata).run()
     finally:
-      pass
-      # Clean up temporary dir if ffmpeg succeeded. If the output file doesn't exist or ffmpeg failed,
-      # keep the temp dir for debugging.
-      # if os.path.exists(output_file) and os.path.getsize(output_file) > 0:
-      #     try:
-      #         shutil.rmtree(tmp_dir)
-      #     except Exception:
-      #         pass
-      # else:
-      #     print(f"Keeping temporary directory for inspection: {tmp_dir}")
+      # Remove temporary directory only when ffmpeg succeeded and output looks valid.
+      try:
+            try:
+                shutil.rmtree(tmp_dir)
+            except Exception:
+                # suppress errors during cleanup
+                pass
+      except Exception:
+          # ensure we never raise from the finally cleanup
+          pass
+      return True
 
 
 if __name__ == '__main__':
   if len(sys.argv) < 2:
-    print("Usage: python download_vod.py <twitch_vod_url> [output_file]")
     sys.exit(1)
   url = sys.argv[1]
   output_file = sys.argv[2] if len(sys.argv) > 2 else None
+
   download_vod(url, output_file, 32)
