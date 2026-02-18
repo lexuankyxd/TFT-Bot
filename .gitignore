@@ -1,5 +1,6 @@
 TFT-OCR-BOT
-*.json
-*.jpg
 .venv
 __pycache__
+vids
+.zed
+*.vim

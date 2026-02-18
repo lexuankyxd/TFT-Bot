@@ -1,0 +1,99 @@
+{
+    "encounters": [
+        {
+            "name": "Darius",
+            "description": "Start with a random 3-cost champion this game.",
+            "probability": "7.0%"
+        },
+        {
+            "name": "Lissandra",
+            "description": "Gain 5 random 1-costs to fight on the Howling Abyss.",
+            "probability": "7.0%"
+        },
+        {
+            "name": "Poppy",
+            "description": "Poppy grants you two component anvils.",
+            "probability": "6.0%"
+        },
+        {
+            "name": "Twisted Fate",
+            "description": "Twisted Fate deals out all gold tier augments this game.",
+            "probability": "6.0%"
+        },
+        {
+            "name": "Rift Herald",
+            "description": "Rift Herald happily fills the game with crabs carrying bonus loot.",
+            "probability": "6.0%"
+        },
+        {
+            "name": "Ekko",
+            "description": "Ekko upgrades your starting champion to 2-star.",
+            "probability": "6.0%"
+        },
+        {
+            "name": "TFT16_OpeningEncounter_AugmentRoundSwap",
+            "description": "LeBlanc manipulates augments to be offered earlier this game.",
+            "probability": "6.0%"
+        },
+        {
+            "name": "Baron Nashor",
+            "description": "The last two surviving players gain 70 gold for an epic final fight.",
+            "probability": "6.0%"
+        },
+        {
+            "name": "Gwen",
+            "description": "After the first 3 carousels, Gwen gifts players a component and a special pair of scissors.",
+            "probability": "6.0%"
+        },
+        {
+            "name": "Tahm Kench",
+            "description": "Tahm Kench grants you gold each stage.",
+            "probability": "5.0%"
+        },
+        {
+            "name": "Zoe",
+            "description": "Zoe gives you highly varied loot at the start of each stage!",
+            "probability": "5.0%"
+        },
+        {
+            "name": "TFT16_OpeningEncounter_NoEncounter",
+            "description": "It's a calm day in Runeterra. No encounter this game.",
+            "probability": "5.0%"
+        },
+        {
+            "name": "Draven",
+            "description": "Whenever a player is eliminated, Draven rewards surviving players with gold per eliminated player.",
+            "probability": "5.0%"
+        },
+        {
+            "name": "Seraphine",
+            "description": "Seraphine turns all augments to prismatic tier this game.",
+            "probability": "4.0%"
+        },
+        {
+            "name": "Galio",
+            "description": "Galio's entrance turns the first augment to prismatic this game.",
+            "probability": "4.0%"
+        },
+        {
+            "name": "Zilean",
+            "description": "Zilean ages the last augment to perfection. It will be prismatic this game.",
+            "probability": "4.0%"
+        },
+        {
+            "name": "Ryze",
+            "description": "Ryze grants you 3 random emblems to begin your journey.",
+            "probability": "4.0%"
+        },
+        {
+            "name": "Xin Zhao",
+            "description": "Start with a random 2-cost champion this game.",
+            "probability": "4.0%"
+        },
+        {
+            "name": "Teemo",
+            "description": "Teemo's scouting party has found +1 Augment reroll for all augments.",
+            "probability": "4.0%"
+        }
+    ]
+}
