@@ -1,6 +1,6 @@
 - parse UI components(the fixed stuffs):
   [] champ title in shop
-  [] bilge shop
+  [] bilge shop, bilge silver serpent
   [] ixtal quest
   [] piltover upgrade
   [] team planner is open?
@@ -8,21 +8,21 @@
   [] is on game screen
   [] lock shop button
   [] augment selection screen (what are the choices, reroll number)
-  [] enemy streak status(is win streaking via fire)
   [] my gold, my level, my xp progress
   [] current round state(is planing or fighting)
   [] the team planing button and setting button
   [] the see damage or champions button
   [] parse player health(gonna be troublesome since what place we're at changes the position of players with lower heath then ours) 
   [] combat stats on the right, the extend tab button, enemy stat, different stat view button
-  [almost done but not rigorously tested] item panel
+  [doing] item panel full 20 items
   [] the pop up message like when you try to remove a locked champion from no scout no pivot, a message thing show up in the lower half of the screen
+  [doing] encounter popup text (2 lines encounter like silver scrapes)
+  [] augment selection screen(augment name, reroll number)
 
 - parse non-fixed stuff(changes if our tactician is on the conner of the board):
   [] champ on my bench (with star level and item, ) 
   [] champ on enemy bench (with star level), they can hide items on champs on bench but that's impossible to find out without control over the game.
   [] champion tool tip
-  [] augment selection screen(augment name, reroll number)
   [] my augment(need to account for changes in horizontal coords depending on how many augment is selected)
   [] enemy augment(same with my augment)
 
@@ -37,3 +37,7 @@
 note:
     champion detection prolly need to use a classifier model to do it, i don't know how big the model must be and preparing data for it is going to be a bitch to do
 
+check list values:
+    nrt: not rigorously tested
+    rt: rigorously tested
+    doing: doing... duh

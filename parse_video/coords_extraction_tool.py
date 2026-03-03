@@ -71,21 +71,27 @@ skip = 40
 frame = None
 ret = False
 zoom = 1.0
-offset_x = 0.0  # offset of the top-left of the scaled video relative to window (in pixels)
+offset_x = (
+    0.0  # offset of the top-left of the scaled video relative to window (in pixels)
+)
 offset_y = 0.0
 panning = False
 pan_last_pos = (0, 0)
 
 mouse_pos = (0, 0)
 text_surface = None
+
+
 def clamp(val, lo, hi):
     return max(lo, min(hi, val))
+
 
 def reset_view():
     global zoom, offset_x, offset_y
     zoom = 1.0
     offset_x = 0.0
     offset_y = 0.0
+
 
 def frame_to_surface(frame_bgr):
     """
@@ -97,6 +103,7 @@ def frame_to_surface(frame_bgr):
     # pygame expects (width, height) ordering for making surface from array.
     surf = pygame.surfarray.make_surface(frame_rgb.swapaxes(0, 1))
     return surf, w, h
+
 
 def draw_info_overlay(screen, zoom, frame_idx, fps, instructions, mouse_world):
     """
@@ -112,12 +119,21 @@ def draw_info_overlay(screen, zoom, frame_idx, fps, instructions, mouse_world):
     if mouse_world is not None:
         mx, my = mouse_world
         lines.append(f"Cursor (video coords): ({mx}, {my})")
-    lines.extend(["", "Controls: Space Play/Pause | Wheel Zoom | Right-drag Pan | R Reset | Click bar to seek"])
+    lines.extend(
+        [
+            "",
+            "Controls: Space Play/Pause | Wheel Zoom | Right-drag Pan | R Reset | Click bar to seek",
+        ]
+    )
 
     # Render lines and compute background rect
     rendered = [font.render(line, True, TEXT_COLOR) for line in lines]
     width = max(surf.get_width() for surf in rendered) if rendered else 0
-    height = sum(surf.get_height() for surf in rendered) + padding * 2 + (len(rendered)-1) * 2
+    height = (
+        sum(surf.get_height() for surf in rendered)
+        + padding * 2
+        + (len(rendered) - 1) * 2
+    )
     bg_rect = pygame.Rect(10, 10, width + padding * 2, height)
     # Semi-opaque background
     s = pygame.Surface((bg_rect.w, bg_rect.h))
@@ -131,6 +147,7 @@ def draw_info_overlay(screen, zoom, frame_idx, fps, instructions, mouse_world):
         screen.blit(surf, (bg_rect.x + padding, y))
         y += surf.get_height() + 2
 
+
 def get_mouse_world_pos(mouse_x, mouse_y, offset_x, offset_y, zoom):
     """
     Convert a mouse position in window coordinates to video pixel coordinates (world).
@@ -141,6 +158,7 @@ def get_mouse_world_pos(mouse_x, mouse_y, offset_x, offset_y, zoom):
     if 0 <= world_x < native_w and 0 <= world_y < native_h:
         return world_x, world_y
     return None
+
 
 # Initially read the first frame
 cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame_idx)
@@ -162,7 +180,9 @@ while running:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 paused = not paused
-            elif event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:  # + key (shift + =)
+            elif (
+                event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS
+            ):  # + key (shift + =)
                 mx, my = pygame.mouse.get_pos()
                 pre_world_x = (mx - offset_x) / zoom
                 pre_world_y = (my - offset_y) / zoom
@@ -206,7 +226,9 @@ while running:
                 if my >= screen.get_height() - BAR_HEIGHT:
                     # Click on progress bar
                     fraction = mx / screen.get_width()
-                    new_frame = int(fraction * (frame_count - 1)) if frame_count > 1 else 0
+                    new_frame = (
+                        int(fraction * (frame_count - 1)) if frame_count > 1 else 0
+                    )
                     current_frame_idx = clamp(new_frame, 0, frame_count - 1)
                     cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame_idx)
                     ret, frame = cap.read()
@@ -246,7 +268,7 @@ while running:
             pre_world_x = (mx - offset_x) / zoom
             pre_world_y = (my - offset_y) / zoom
             if event.y > 0:
-                zoom = clamp(zoom * (ZOOM_STEP ** event.y), MIN_ZOOM, MAX_ZOOM)
+                zoom = clamp(zoom * (ZOOM_STEP**event.y), MIN_ZOOM, MAX_ZOOM)
             else:
                 zoom = clamp(zoom / (ZOOM_STEP ** (-event.y)), MIN_ZOOM, MAX_ZOOM)
             offset_x = mx - pre_world_x * zoom
@@ -254,14 +276,14 @@ while running:
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_RIGHT]:
-      current_frame_idx = min(frame_count - 1, current_frame_idx + skip)
-      for _ in range(skip-1):
-          cap.read()
-      ret, frame = cap.read()
+        current_frame_idx = min(frame_count - 1, current_frame_idx + skip)
+        for _ in range(skip - 1):
+            cap.read()
+        ret, frame = cap.read()
     if keys[pygame.K_LEFT]:
-      current_frame_idx = max(0, current_frame_idx - skip)
-      cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame_idx)
-      ret, frame = cap.read()
+        current_frame_idx = max(0, current_frame_idx - skip)
+        cap.set(cv2.CAP_PROP_POS_FRAMES, current_frame_idx)
+        ret, frame = cap.read()
 
     # Playback logic
     if not paused:
@@ -305,9 +327,24 @@ while running:
             cross_y = offset_y + wy * zoom
             # Only draw crosshair if within window bounds
             if 0 <= cross_x < screen.get_width() and 0 <= cross_y < screen.get_height():
-                pygame.draw.line(screen, (255, 200, 0), (cross_x - 8, cross_y), (cross_x + 8, cross_y), 1)
-                pygame.draw.line(screen, (255, 200, 0), (cross_x, cross_y - 8), (cross_x, cross_y + 8), 1)
-            screen.blit(coord_surf, (10, screen.get_height() - BAR_HEIGHT - coord_surf.get_height() - 10))
+                pygame.draw.line(
+                    screen,
+                    (255, 200, 0),
+                    (cross_x - 8, cross_y),
+                    (cross_x + 8, cross_y),
+                    1,
+                )
+                pygame.draw.line(
+                    screen,
+                    (255, 200, 0),
+                    (cross_x, cross_y - 8),
+                    (cross_x, cross_y + 8),
+                    1,
+                )
+            screen.blit(
+                coord_surf,
+                (10, screen.get_height() - BAR_HEIGHT - coord_surf.get_height() - 10),
+            )
         else:
             mouse_world = None
 
@@ -316,11 +353,17 @@ while running:
         draw_info_overlay(screen, zoom, current_frame_idx, fps, None, mouse_world)
 
         # Draw progress bar
-        bar_rect = pygame.Rect(0, screen.get_height() - BAR_HEIGHT, screen.get_width(), BAR_HEIGHT)
+        bar_rect = pygame.Rect(
+            0, screen.get_height() - BAR_HEIGHT, screen.get_width(), BAR_HEIGHT
+        )
         pygame.draw.rect(screen, BAR_COLOR_BG, bar_rect)
         if frame_count > 1:
-            progress_width = int((current_frame_idx / (frame_count - 1)) * screen.get_width())
-            progress_rect = pygame.Rect(0, screen.get_height() - BAR_HEIGHT, progress_width, BAR_HEIGHT)
+            progress_width = int(
+                (current_frame_idx / (frame_count - 1)) * screen.get_width()
+            )
+            progress_rect = pygame.Rect(
+                0, screen.get_height() - BAR_HEIGHT, progress_width, BAR_HEIGHT
+            )
             pygame.draw.rect(screen, BAR_COLOR_FG, progress_rect)
 
         pygame.display.flip()
